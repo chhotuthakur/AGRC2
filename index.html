@@ -1,135 +1,132 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Collection Entry</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TDC / Collection Form</title>
 
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<!-- Bootstrap 5 -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
-  <style>
-    body {
-      background: #f2f2f2;
-    }
-    .card {
-      max-width: 650px;
-      margin: auto;
-      margin-top: 20px;
-      border-radius: 12px;
-    }
-    .logo {
-      width: 100px;
-      display: block;
-      margin: auto;
-    }
-  </style>
+<style>
+body {
+  background:#f5f7fa;
+}
+.card {
+  border-radius:15px;
+}
+.hidden {
+  display:none;
+}
+</style>
+
 </head>
-
 <body>
 
-<div class="card p-3 shadow">
+<div class="container mt-4">
+  <div class="card p-4 shadow">
 
-  <img src="logo.png" class="logo">
+    <h4 class="mb-3 text-center">Collection / TDC Entry</h4>
 
-  <h4 class="text-center mt-2">Collection Form</h4>
+    <!-- IVRS -->
+    <div class="mb-3">
+      <label>Enter IVRS</label>
+      <div class="input-group">
+        <input type="text" id="ivrs" class="form-control">
+        <button class="btn btn-primary" onclick="fetchData()">Fetch</button>
+      </div>
+    </div>
 
-  <!-- IVRS -->
-  <div class="mb-3">
-    <label>Consumer No (IVRS)</label>
-    <input type="text" id="ivrs" class="form-control" required>
-    <button class="btn btn-primary mt-2 w-100" onclick="fetchData()">Fetch Consumer</button>
+    <!-- Consumer Details -->
+    <div id="consumerBox" class="hidden">
+
+      <hr>
+
+      <p><b>Name:</b> <span id="name"></span></p>
+      <p><b>Address:</b> <span id="address"></span></p>
+      <p><b>Mobile:</b> <span id="mobile"></span></p>
+      <p><b>Outstanding:</b> ₹ <span id="due"></span></p>
+
+      <hr>
+
+      <!-- Type -->
+      <div class="mb-3">
+        <label>Select Type</label><br>
+        <input type="radio" name="type" value="paid" onclick="selectType()"> Paid
+        <input type="radio" name="type" value="tdc" onclick="selectType()"> TDC
+      </div>
+
+      <!-- Amount -->
+      <div class="mb-3 hidden" id="amountBox">
+        <label>Enter Amount</label>
+        <input type="number" id="amount" class="form-control">
+      </div>
+
+      <!-- Image -->
+      <div class="mb-3 hidden" id="imageBox">
+        <label>Upload GPS Photo</label>
+        <input type="file" id="image" class="form-control" accept="image/*" capture="environment">
+      </div>
+
+      <!-- Submit -->
+      <button class="btn btn-success w-100" onclick="submitData()">Submit</button>
+
+    </div>
+
   </div>
-
-  <!-- DETAILS -->
-  <div id="details" style="display:none;">
-
-    <hr>
-
-    <p><b>Name:</b> <span id="name"></span></p>
-    <p><b>Address:</b> <span id="address"></span></p>
-    <p><b>Mobile:</b> <span id="mobile"></span></p>
-    <p><b>Tariff:</b> <span id="tariff"></span></p>
-    <p><b>Load:</b> <span id="load"></span></p>
-    <p><b>Outstanding:</b> <span id="due"></span></p>
-    <p><b>OTS:</b> <span id="ots"></span></p>
-
-  </div>
-
-  <!-- TYPE -->
-  <div class="mb-3 mt-2">
-    <label>Collection Type</label><br>
-    <input type="radio" name="type" value="paid" onchange="toggleType()"> Paid
-    <input type="radio" name="type" value="tdc" class="ms-3" onchange="toggleType()"> TDC
-  </div>
-
-  <!-- AMOUNT -->
-  <div class="mb-3" id="amountBox" style="display:none;">
-    <label>Amount</label>
-    <input type="number" id="amount" class="form-control">
-  </div>
-
-  <!-- IMAGE -->
-  <div class="mb-3" id="imageBox" style="display:none;">
-    <label>Upload TDC Photo (GPS Enabled)</label>
-    <input type="file" id="image" accept="image/*" capture="environment" class="form-control">
-  </div>
-
-  <button class="btn btn-success w-100" onclick="submitData()">Submit</button>
-
 </div>
 
 <script>
 
-const API_URL = "https://script.google.com/macros/s/AKfycbyBDxGiSUyULxqm8Zyqv_peeZnNeM5awBspIvhB2MdwYXh5wYelt_kOhY4uOYwSwXJZPQ/exec";
+// 🔥 YOUR APPS SCRIPT URL
+const API_URL = "https://script.google.com/macros/s/AKfycbxbtOGxA9TvAzj53eUcxAhKSvl_RVLfFjHNBZC-VvKhx4FzKMZW84HGP6QI1VDSW6Py1w/exec";
 
 let consumer = {};
 
-// ================= FETCH =================
+// ================= FETCH DATA =================
 function fetchData() {
 
-  const ivrs = document.getElementById("ivrs").value;
+  let ivrs = document.getElementById("ivrs").value;
 
-  if (!ivrs) {
-    alert("Enter IVRS");
-    return;
-  }
-
-  fetch(`${API_URL}?ivrs=${ivrs}`)
+  fetch(API_URL + "?ivrs=" + ivrs)
   .then(res => res.json())
   .then(data => {
 
-    if (data.status === "success") {
-
-      consumer = data;
-
-      document.getElementById("details").style.display = "block";
-
-      document.getElementById("name").innerText = data.name;
-      document.getElementById("address").innerText = data.address;
-      document.getElementById("mobile").innerText = data.mobile;
-      document.getElementById("tariff").innerText = data.tariff;
-      document.getElementById("load").innerText = data.load;
-      document.getElementById("due").innerText = data.due;
-      document.getElementById("ots").innerText = data.ots;
-
-    } else {
+    if (data.status !== "success") {
       alert("Consumer not found");
+      return;
     }
 
+    consumer = data;
+
+    document.getElementById("consumerBox").classList.remove("hidden");
+
+    document.getElementById("name").innerText = data.name;
+    document.getElementById("address").innerText = data.address;
+    document.getElementById("mobile").innerText = data.mobile;
+    document.getElementById("due").innerText = data.due;
+
   });
+
 }
 
 
-// ================= TOGGLE =================
-function toggleType() {
+// ================= TYPE SELECT =================
+function selectType() {
 
-  const type = document.querySelector('input[name="type"]:checked').value;
+  let type = document.querySelector('input[name="type"]:checked').value;
 
   if (type === "paid") {
-    document.getElementById("amountBox").style.display = "block";
-    document.getElementById("imageBox").style.display = "none";
-  } else {
-    document.getElementById("amountBox").style.display = "none";
-    document.getElementById("imageBox").style.display = "block";
+    document.getElementById("amountBox").classList.remove("hidden");
+    document.getElementById("imageBox").classList.add("hidden");
+  }
+
+  if (type === "tdc") {
+    document.getElementById("amountBox").classList.add("hidden");
+    document.getElementById("imageBox").classList.remove("hidden");
+
+    // auto fill amount
+    document.getElementById("amount").value = consumer.due;
   }
 }
 
@@ -137,89 +134,78 @@ function toggleType() {
 // ================= SUBMIT =================
 function submitData() {
 
-  const ivrs = document.getElementById("ivrs").value;
-  const type = document.querySelector('input[name="type"]:checked');
+  let ivrs = document.getElementById("ivrs").value;
+  let type = document.querySelector('input[name="type"]:checked').value;
+  let amount = document.getElementById("amount").value;
 
   if (!type) {
     alert("Select type");
     return;
   }
 
-  const selectedType = type.value;
-
-  let amount = (selectedType === "tdc") 
-    ? consumer.due 
-    : document.getElementById("amount").value;
-
-  if (selectedType === "paid" && !amount) {
+  if (type === "paid" && !amount) {
     alert("Enter amount");
     return;
   }
 
-  const file = document.getElementById("image").files[0];
+  let file = document.getElementById("image").files[0];
 
-  if (selectedType === "tdc" && !file) {
-    alert("Upload TDC photo");
-    return;
-  }
+  let reader = new FileReader();
 
-  if (file) {
+  reader.onload = function() {
 
-    const reader = new FileReader();
+    let base64 = reader.result.split(",")[1];
 
-    reader.onload = function () {
+    let today = new Date();
+    let dd = String(today.getDate()).padStart(2, '0');
+    let mm = String(today.getMonth()+1).padStart(2, '0');
+    let yyyy = today.getFullYear();
 
-      const base64 = reader.result.split(',')[1];
+    let filename = ivrs + dd + mm + yyyy + ".jpg";
 
-      sendData(ivrs, selectedType, amount, base64);
-
-    };
-
-    reader.readAsDataURL(file);
-
-  } else {
-
-    sendData(ivrs, selectedType, amount, null);
-
-  }
-}
-
-
-// ================= SEND =================
-function sendData(ivrs, type, amount, imageData) {
-
-  const today = new Date();
-
-  const dd = String(today.getDate()).padStart(2, '0');
-  const mm = String(today.getMonth() + 1).padStart(2, '0');
-  const yyyy = today.getFullYear();
-
-  const dateStr = dd + mm + yyyy;
-
-  const filename = ivrs + dateStr + ".jpg";
-
-  fetch(API_URL, {
-    method: "POST",
-    body: JSON.stringify({
-      ivrs: ivrs,
-      name: consumer.name,
-      type: type,
-      amount: amount,
-      image: imageData,
-      filename: filename
+    fetch(API_URL, {
+      method: "POST",
+      body: JSON.stringify({
+        ivrs: ivrs,
+        name: consumer.name,
+        type: type,
+        amount: amount,
+        image: base64,
+        filename: filename
+      })
     })
-  })
-  .then(res => res.json())
-  .then(data => {
-
-    if (data.status === "saved") {
-      alert("Saved Successfully ✅");
+    .then(res => res.json())
+    .then(data => {
+      alert("Saved Successfully");
       location.reload();
-    } else {
-      alert("Error saving");
-    }
+    });
 
-  });
+  };
+
+  if (type === "tdc") {
+    if (!file) {
+      alert("Upload photo");
+      return;
+    }
+    reader.readAsDataURL(file);
+  } else {
+    // paid without image
+    fetch(API_URL, {
+      method: "POST",
+      body: JSON.stringify({
+        ivrs: ivrs,
+        name: consumer.name,
+        type: type,
+        amount: amount
+      })
+    })
+    .then(res => res.json())
+    .then(data => {
+      alert("Saved Successfully");
+      location.reload();
+    });
+  }
+
 }
 
 </script>
