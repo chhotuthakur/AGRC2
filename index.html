@@ -5,114 +5,124 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>TDC / Collection Form</title>
 
-<!-- Bootstrap 5 -->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
 <style>
-body {
-  background:#f5f7fa;
-}
-.card {
-  border-radius:15px;
-}
-.hidden {
-  display:none;
-}
+body { background:#eef2f7; }
+.card { border-radius:12px; }
+.hidden { display:none; }
 </style>
 
 </head>
 <body>
 
 <div class="container mt-4">
-  <div class="card p-4 shadow">
+<div class="card p-4 shadow">
 
-    <h4 class="mb-3 text-center">Collection / TDC Entry</h4>
+<h4 class="text-center mb-3">Collection / TDC Entry</h4>
 
-    <!-- IVRS -->
-    <div class="mb-3">
-      <label>Enter IVRS</label>
-      <div class="input-group">
-        <input type="text" id="ivrs" class="form-control">
-        <button class="btn btn-primary" onclick="fetchData()">Fetch</button>
-      </div>
-    </div>
+<!-- IVRS -->
+<div class="mb-3">
+<label>Enter IVRS</label>
+<div class="input-group">
+<input type="text" id="ivrs" class="form-control" placeholder="Enter IVRS">
+<button class="btn btn-primary" onclick="fetchConsumer()">Fetch</button>
+</div>
+</div>
 
-    <!-- Consumer Details -->
-    <div id="consumerBox" class="hidden">
+<!-- CONSUMER DETAILS -->
+<div id="consumerBox" class="hidden">
 
-      <hr>
+<hr>
 
-      <p><b>Name:</b> <span id="name"></span></p>
-      <p><b>Address:</b> <span id="address"></span></p>
-      <p><b>Mobile:</b> <span id="mobile"></span></p>
-      <p><b>Outstanding:</b> ₹ <span id="due"></span></p>
+<p><b>Name:</b> <span id="name"></span></p>
+<p><b>Address:</b> <span id="address"></span></p>
+<p><b>Mobile:</b> <span id="mobile"></span></p>
+<p><b>Outstanding:</b> ₹ <span id="due"></span></p>
 
-      <hr>
+<hr>
 
-      <!-- Type -->
-      <div class="mb-3">
-        <label>Select Type</label><br>
-        <input type="radio" name="type" value="paid" onclick="selectType()"> Paid
-        <input type="radio" name="type" value="tdc" onclick="selectType()"> TDC
-      </div>
+<!-- TYPE -->
+<div class="mb-3">
+<label>Select Type</label><br>
+<input type="radio" name="type" value="paid" onclick="handleType()"> Paid
+<input type="radio" name="type" value="tdc" onclick="handleType()"> TDC
+</div>
 
-      <!-- Amount -->
-      <div class="mb-3 hidden" id="amountBox">
-        <label>Enter Amount</label>
-        <input type="number" id="amount" class="form-control">
-      </div>
+<!-- AMOUNT -->
+<div id="amountBox" class="mb-3 hidden">
+<label>Enter Amount</label>
+<input type="number" id="amount" class="form-control">
+</div>
 
-      <!-- Image -->
-      <div class="mb-3 hidden" id="imageBox">
-        <label>Upload GPS Photo</label>
-        <input type="file" id="image" class="form-control" accept="image/*" capture="environment">
-      </div>
+<!-- IMAGE -->
+<div id="imageBox" class="mb-3 hidden">
+<label>Upload GPS Photo</label>
+<input type="file" id="image" class="form-control" accept="image/*" capture="environment">
+</div>
 
-      <!-- Submit -->
-      <button class="btn btn-success w-100" onclick="submitData()">Submit</button>
+<button class="btn btn-success w-100" onclick="submitData()">Submit</button>
 
-    </div>
+</div>
 
-  </div>
+</div>
 </div>
 
 <script>
 
-// 🔥 YOUR APPS SCRIPT URL
-const API_URL = "https://script.google.com/macros/s/AKfycbzqViCwg6MO6iYCNQkiIV4-2S1KY3wZ2J6lAwBrRUxxCqbGGnMd7SOi8bv0DqCXmh6Zzg/exec";
+// 🔥 YOUR API
+const API = "https://script.google.com/macros/s/AKfycbxbtOGxA9TvAzj53eUcxAhKSvl_RVLfFjHNBZC-VvKhx4FzKMZW84HGP6QI1VDSW6Py1w/exec";
 
 let consumer = {};
 
-// ================= FETCH DATA =================
-function fetchData() {
 
-  let ivrs = document.getElementById("ivrs").value;
+// ================= FETCH USING JSONP =================
+function fetchConsumer() {
 
-  fetch(API_URL + "?ivrs=" + ivrs)
-  .then(res => res.json())
-  .then(data => {
+  let ivrs = document.getElementById("ivrs").value.trim();
 
-    if (data.status !== "success") {
-      alert("Consumer not found");
-      return;
-    }
+  if (!ivrs) {
+    alert("Enter IVRS");
+    return;
+  }
 
-    consumer = data;
+  // remove old script
+  let old = document.getElementById("jsonp");
+  if (old) old.remove();
 
-    document.getElementById("consumerBox").classList.remove("hidden");
+  let script = document.createElement("script");
+  script.id = "jsonp";
 
-    document.getElementById("name").innerText = data.name;
-    document.getElementById("address").innerText = data.address;
-    document.getElementById("mobile").innerText = data.mobile;
-    document.getElementById("due").innerText = data.due;
+  // cache breaker
+  let rand = new Date().getTime();
 
-  });
+  script.src = API + "?ivrs=" + ivrs + "&callback=handleResponse&_=" + rand;
 
+  document.body.appendChild(script);
 }
 
 
-// ================= TYPE SELECT =================
-function selectType() {
+// ================= HANDLE RESPONSE =================
+function handleResponse(data) {
+
+  if (!data || data.status !== "success") {
+    alert("Consumer not found ❌");
+    return;
+  }
+
+  consumer = data;
+
+  document.getElementById("consumerBox").classList.remove("hidden");
+
+  document.getElementById("name").innerText = data.name;
+  document.getElementById("address").innerText = data.address;
+  document.getElementById("mobile").innerText = data.mobile;
+  document.getElementById("due").innerText = data.due;
+}
+
+
+// ================= TYPE LOGIC =================
+function handleType() {
 
   let type = document.querySelector('input[name="type"]:checked').value;
 
@@ -135,13 +145,16 @@ function selectType() {
 function submitData() {
 
   let ivrs = document.getElementById("ivrs").value;
-  let type = document.querySelector('input[name="type"]:checked').value;
-  let amount = document.getElementById("amount").value;
+  let type = document.querySelector('input[name="type"]:checked');
 
   if (!type) {
     alert("Select type");
     return;
   }
+
+  type = type.value;
+
+  let amount = document.getElementById("amount").value;
 
   if (type === "paid" && !amount) {
     alert("Enter amount");
@@ -150,61 +163,60 @@ function submitData() {
 
   let file = document.getElementById("image").files[0];
 
-  let reader = new FileReader();
+  let today = new Date();
+  let dd = String(today.getDate()).padStart(2, '0');
+  let mm = String(today.getMonth()+1).padStart(2, '0');
+  let yyyy = today.getFullYear();
 
-  reader.onload = function() {
+  let filename = ivrs + dd + mm + yyyy + ".jpg";
 
-    let base64 = reader.result.split(",")[1];
 
-    let today = new Date();
-    let dd = String(today.getDate()).padStart(2, '0');
-    let mm = String(today.getMonth()+1).padStart(2, '0');
-    let yyyy = today.getFullYear();
-
-    let filename = ivrs + dd + mm + yyyy + ".jpg";
-
-    fetch(API_URL, {
-      method: "POST",
-      body: JSON.stringify({
-        ivrs: ivrs,
-        name: consumer.name,
-        type: type,
-        amount: amount,
-        image: base64,
-        filename: filename
-      })
-    })
-    .then(res => res.json())
-    .then(data => {
-      alert("Saved Successfully");
-      location.reload();
-    });
-
-  };
-
+  // ===== TDC WITH IMAGE =====
   if (type === "tdc") {
+
     if (!file) {
       alert("Upload photo");
       return;
     }
+
+    let reader = new FileReader();
+
+    reader.onload = function() {
+
+      let base64 = reader.result.split(",")[1];
+
+      sendData(ivrs, type, amount, base64, filename);
+    };
+
     reader.readAsDataURL(file);
+
   } else {
-    // paid without image
-    fetch(API_URL, {
-      method: "POST",
-      body: JSON.stringify({
-        ivrs: ivrs,
-        name: consumer.name,
-        type: type,
-        amount: amount
-      })
-    })
-    .then(res => res.json())
-    .then(data => {
-      alert("Saved Successfully");
-      location.reload();
-    });
+
+    // PAID
+    sendData(ivrs, type, amount, "", "");
   }
+
+}
+
+
+// ================= SEND DATA =================
+function sendData(ivrs, type, amount, image, filename) {
+
+  fetch(API, {
+    method: "POST",
+    body: JSON.stringify({
+      ivrs: ivrs,
+      name: consumer.name,
+      type: type,
+      amount: amount,
+      image: image,
+      filename: filename
+    })
+  })
+  .then(() => {
+    alert("Saved Successfully ✅");
+    location.reload();
+  });
 
 }
 
